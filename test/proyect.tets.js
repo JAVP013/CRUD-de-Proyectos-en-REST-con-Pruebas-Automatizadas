@@ -1,9 +1,9 @@
 const app = require ('expres');
 const router = express.router();
-const taskController = require('../controllers/taskController');
+const taskController = require('../controllers/proyectController');
 
 router.get('/', (req, res)=> {
-    const tasks = taskController.getAllTasks();
+    const tasks = taskController.getAllProyect();
     res.status(200).json(tasks);
  });
  
@@ -12,14 +12,14 @@ router.get('/', (req, res)=> {
  
      /*const title = req.body.title;
      const description = req.body.description;*/
-     const newTask = taskController.createTask(title, description);
+     const newTask = taskController.createProyect(title, description);
      res.status(200).json(newTask);
  
  });
  
  router.get('/:id', (req, res)=> {
      const { id } = req.params;
-     const task = taskController.getTaskById(id);
+     const task = taskController.getProyectById(id);
      console.log(task);
      if(task.length>0)
          res.status(200).json(task);
@@ -28,13 +28,13 @@ router.get('/', (req, res)=> {
  });
  
  router.put('/', (req, res) => {
-     const taskUpdated = taskController.updateTask(req.body);
+     const taskUpdated = taskController.updateProyect(req.body);
      res.status(201).json(taskUpdated);
  });
  
  router.delete('/:id', (req, res) => {
      const { id } = req.params;
-     const taskDeleted = taskController.deleteTask(id);
+     const taskDeleted = taskController.deleteProyect(id);
      res.status(200).json(taskDeleted);
  });
  
