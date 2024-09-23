@@ -1,83 +1,95 @@
 const request = require('supertest');
-const app = require('express');
+const chai = require('chai');
+const sinon = require('sinon');
 
-describe('POST /tasks', () => {
-    test('Debería crear una tarea con datos válidos', async () => {
-        const response = await request(app)
-            .post('/tasks')
-            .send({
-                name: "Tarea 1",
-                startDate: "2024-09-01",
-                endDate: "2024-09-10",
-                status: "pendiente",
-                budget: 100
-            });
+const app = require('../index');
 
-        expect(response.statusCode).toBe(201); // Cambiado a 201 para creación
-        expect(response.body.name).toBe("Tarea 1");
-        expect(response.body.startDate).toBe("2024-09-01");
-        expect(response.body.endDate).toBe("2024-09-10");
-        expect(response.body.status).toBe("pendiente");
-        expect(response.body.budget).toBe(100);
+const expect = chai.expect;
+
+describe('POST /proyects', () => {
+    it('1. Debería crear un proyecto con datos válidos y devolver estatus 201', async () => {
+        const proyectData = {
+            name: "Nuevo Sistema de Gestión",
+            description: "Implementar un sistema de recursos.",
+            startDate: "2024-09-01",
+            endDate: "2025-02-01",
+            status: "en progreso",
+            teamMembers: ["Carlos Pérez", "Ana Gómez", "Luis Martínez"],
+            budget: 50000
+        };
+
+        const res = await request(app).post('/proyects').send(proyectData);
+        expect(res.status).to.equal(201);
+        expect(res.body).to.have.property('name', proyectData.name);
+        expect(res.body).to.have.property('description', proyectData.description);
+        expect(res.body).to.have.property('startDate', proyectData.startDate);
+        expect(res.body).to.have.property('endDate', proyectData.endDate);
+        expect(res.body).to.have.property('status', proyectData.status);
+        expect(res.body).to.have.property('teamMembers').eql(proyectData.teamMembers);
+        expect(res.body).to.have.property('budget', proyectData.budget);
     });
 
-    test('Debería devolver error si el campo "name" está vacío', async () => {
-        const response = await request(app)
-            .post('/tasks')
-            .send({
-                name: "",
-                startDate: "2024-09-01",
-                endDate: "2024-09-10",
-                status: "pendiente",
-                budget: 100
-            });
+    it('2. Debería devolver un error 400 si el campo "name" está vacío', async () => {
+        const proyectData = {
+            name: "",
+            description: "Implementar un sistema de recursos.",
+            startDate: "2024-09-01",
+            endDate: "2025-02-01",
+            status: "en progreso",
+            teamMembers: ["Carlos Pérez", "Ana Gómez", "Luis Martínez"],
+            budget: 50000
+        };
 
-        expect(response.statusCode).toBe(400);
-        expect(response.body.errors[0].msg).toBe('El campo "name" es obligatorio');
+        const res = await request(app).post('/proyects').send(proyectData);
+        expect(res.status).to.equal(400);
+        expect(res.body.errors[0].msg).to.equal('El campo "name" es obligatorio');
     });
 
-    test('Debería devolver error si el campo "startDate" no está en formato correcto', async () => {
-        const response = await request(app)
-            .post('/tasks')
-            .send({
-                name: "Tarea 2",
-                startDate: "invalid-date",
-                endDate: "2024-09-10",
-                status: "pendiente",
-                budget: 100
-            });
+    it('3. Debería devolver un error 400 si el campo "startDate" no tiene el formato correcto', async () => {
+        const proyectData = {
+            name: "Nuevo Sistema de Gestión",
+            description: "Implementar un sistema de recursos.",
+            startDate: "invalid-date",
+            endDate: "2025-02-01",
+            status: "en progreso",
+            teamMembers: ["Carlos Pérez", "Ana Gómez", "Luis Martínez"],
+            budget: 50000
+        };
 
-        expect(response.statusCode).toBe(400);
-        expect(response.body.errors[0].msg).toBe('El campo "startDate" debe estar en formato YYYY-MM-DD');
+        const res = await request(app).post('/proyects').send(proyectData);
+        expect(res.status).to.equal(400);
+        expect(res.body.errors[0].msg).to.equal('El campo "startDate" debe estar en formato YYYY-MM-DD');
     });
 
-    test('Debería devolver error si el campo "status" tiene un valor no permitido', async () => {
-        const response = await request(app)
-            .post('/tasks')
-            .send({
-                name: "Tarea 3",
-                startDate: "2024-09-01",
-                endDate: "2024-09-10",
-                status: "invalido", // Valor no permitido
-                budget: 100
-            });
+    it('4. Debería devolver un error 400 si el campo "status" tiene un valor no permitido', async () => {
+        const proyectData = {
+            name: "Nuevo Sistema de Gestión",
+            description: "Implementar un sistema de recursos.",
+            startDate: "2024-09-01",
+            endDate: "2025-02-01",
+            status: "invalido", // Valor no permitido
+            teamMembers: ["Carlos Pérez", "Ana Gómez", "Luis Martínez"],
+            budget: 50000
+        };
 
-        expect(response.statusCode).toBe(400);
-        expect(response.body.errors[0].msg).toBe('El campo "status" debe ser uno de: pendiente, en progreso, completado');
+        const res = await request(app).post('/proyects').send(proyectData);
+        expect(res.status).to.equal(400);
+        expect(res.body.errors[0].msg).to.equal('El campo "status" debe ser uno de: pendiente, en progreso, completado');
     });
 
-    test('Debería devolver error si el campo "budget" no es un número positivo', async () => {
-        const response = await request(app)
-            .post('/tasks')
-            .send({
-                name: "Tarea 4",
-                startDate: "2024-09-01",
-                endDate: "2024-09-10",
-                status: "pendiente",
-                budget: -50 // Número no positivo
-            });
+    it('5. Debería devolver un error 400 si el campo "budget" no es un número positivo', async () => {
+        const proyectData = {
+            name: "Nuevo Sistema de Gestión",
+            description: "Implementar un sistema de recursos.",
+            startDate: "2024-09-01",
+            endDate: "2025-02-01",
+            status: "en progreso",
+            teamMembers: ["Carlos Pérez", "Ana Gómez", "Luis Martínez"],
+            budget: -100 // Número no positivo
+        };
 
-        expect(response.statusCode).toBe(400);
-        expect(response.body.errors[0].msg).toBe('El campo "budget" debe ser un número positivo');
+        const res = await request(app).post('/proyects').send(proyectData);
+        expect(res.status).to.equal(400);
+        expect(res.body.errors[0].msg).to.equal('El campo "budget" debe ser un número positivo');
     });
 });
